@@ -6,6 +6,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -39,6 +40,7 @@ public class Address {
 	private String city;
 	
 	@NotBlank
+	@Size(min = 2, max = 2)
 	@Column(nullable = false)
 	private String state;
 	
@@ -47,6 +49,7 @@ public class Address {
 	private String country;
 	
 	@NotBlank
+	@Size(min = 9, max = 9)
 	@Column(nullable = false)
 	private String zipcode;
 	

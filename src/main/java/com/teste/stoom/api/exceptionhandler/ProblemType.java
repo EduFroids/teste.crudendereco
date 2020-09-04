@@ -9,7 +9,8 @@ public enum ProblemType {
 	MENSAGEM_INCOMPREENSIVEL("/mensagem-incompreensivel", "Mensagem incompreensível"),
 	PARAMETRO_INVALIDO("/paramentro-invalido", "Parâmetro inválido"),
 	ERRO_DE_SISTEMA("/erro-de-sistema", "Erro de sistema"),
-	DADOS_INVALIDOS("/dados_invalidos", "Dados inválidos");
+	DADOS_INVALIDOS("/dados_invalidos", "Dados inválidos"),
+	RECURSO_GEOCODING_NAO_ENCONTRADO("/recurso-geocoding-nao-encontrado", "Recurso Geocoding não encontrado");
 	
 	private String title;
 	private String uri;

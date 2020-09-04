@@ -1,10 +1,13 @@
 package com.teste.stoom.api.domain.service;
 
+import java.io.IOException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 import com.teste.stoom.api.domain.exception.AddressNaoEncontradoException;
+import com.teste.stoom.api.domain.exception.GeocodingException;
 import com.teste.stoom.api.domain.model.Address;
 import com.teste.stoom.api.domain.model.GeocodingLocation;
 import com.teste.stoom.api.domain.repository.AddressRepository;
@@ -28,8 +31,13 @@ public class CadastroAddressService {
 				
 				address.setLatitude(location.getLatitude());
 				address.setLongitude(location.getLongitude());
-			} catch (Exception e) {
-				// TODO: handle exception
+				
+			} catch (GeocodingException e) {
+				throw new GeocodingException(e.getMessage());
+			} catch (IOException e) {
+				throw new GeocodingException(e.getMessage());
+			} catch (InterruptedException e) {
+				throw new GeocodingException(e.getMessage());
 			}
 		}
 		

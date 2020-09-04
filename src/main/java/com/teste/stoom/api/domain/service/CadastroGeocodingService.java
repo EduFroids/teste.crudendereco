@@ -7,21 +7,27 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.teste.stoom.api.domain.exception.GeocodingException;
+import com.teste.stoom.api.domain.model.GeocodingErrors;
 import com.teste.stoom.api.domain.model.GeocodingLocation;
 import com.teste.stoom.api.domain.model.GeocodingResults;
+import com.teste.stoom.api.property.ApiProperty;
 
 @Service
 public class CadastroGeocodingService {
 	
-	private static final String GEOCODING_RESOURCE = "https://maps.googleapis.com/maps/api/geocode/json?address=";
-	private static final String API_KEY = "";
+	@Autowired
+	private ApiProperty apiProperty;
 	
 	public GeocodingLocation buscarLocaliacao(String rua, String numero, String bairro, String cidade, String estado) throws IOException, InterruptedException {
 		
 		HttpClient httpClient = HttpClient.newHttpClient();
+		GeocodingLocation location = null;
 		
 		StringBuilder endereco = new StringBuilder();
 		endereco.append(configurarString(rua)).append(",")
@@ -30,15 +36,27 @@ public class CadastroGeocodingService {
 			.append(configurarString(cidade)).append(",")
 			.append(configurarString(estado));
 		
-		String requestUri = GEOCODING_RESOURCE + endereco.toString() + "&key=" + API_KEY;
+		UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder
+				.fromHttpUrl(apiProperty.getGeocodingProperty().getHttpUrl())
+				.queryParam(apiProperty.getGeocodingProperty().getParamAddress(), endereco)
+				.queryParam(apiProperty.getGeocodingProperty().getParamKey(), apiProperty.getGeocodingProperty().getApiKey());
 		
-		HttpRequest httpRequest = HttpRequest.newBuilder().GET().uri(URI.create(requestUri))
-                .timeout(Duration.ofMillis(3000)).build();
+		HttpRequest httpRequest = HttpRequest.newBuilder().GET().uri(URI.create(uriComponentsBuilder.toUriString()))
+                .timeout(Duration.ofMillis(2000)).build();
 		
 		HttpResponse<String> httpResponse = httpClient.send(httpRequest,
                 HttpResponse.BodyHandlers.ofString());
 		
-		GeocodingLocation location = criarLocalizacao(httpResponse.body());
+		Object object = criarLocalizacao(httpResponse.body());
+		
+		if(object instanceof GeocodingLocation) {
+			location = (GeocodingLocation) object;
+			
+		} else {
+			GeocodingErrors errors = (GeocodingErrors) object;
+			
+			throw new GeocodingException(errors.getErrorMessge());
+		}
 		
 		return location;
 	}
@@ -52,12 +70,19 @@ public class CadastroGeocodingService {
 		return str;
 	}
 
-	private GeocodingLocation criarLocalizacao(String response) throws IOException {
+	private Object criarLocalizacao(String response) throws IOException {
 		ObjectMapper mapper = new ObjectMapper();
 		
 		GeocodingResults results = mapper.readValue(response, GeocodingResults.class);
 		
-		return results.getResults().get(0).getGeometry().getLocation();
+		if(results.isOk()) {
+			return results.getResults().get(0).getGeometry().getLocation();
+			
+		} else {
+			GeocodingErrors errors = mapper.readValue(response, GeocodingErrors.class);
+			return errors;
+			
+		}
 	}
 
 }
